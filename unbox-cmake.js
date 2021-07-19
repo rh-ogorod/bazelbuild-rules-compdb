@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S yarn node
 // Hey Emacs, this is -*- coding: utf-8 -*-
 
 const fs = require('fs');

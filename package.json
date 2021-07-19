@@ -11,6 +11,9 @@
   "eslintConfig": {
     "extends": "./eslint.config.js"
   },
+  "dependencies": {
+    "optimist": "^0.6.1"
+  },
   "devDependencies": {
     "@types/node": "^14.17.3",
     "@typescript-eslint/eslint-plugin": "^4.27.0",

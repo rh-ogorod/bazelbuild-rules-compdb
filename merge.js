@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S yarn node
 
 // adapted from https://gist.github.com/iauns/6276336
 
