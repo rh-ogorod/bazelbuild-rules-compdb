@@ -8,6 +8,9 @@ const os = require('os');
 const { tokeniseCommand } = require('./lib');
 
 // eslint-disable-next-line max-len
+// command = "/usr/bin/gcc-11 -U_FORTIFY_SOURCE -fstack-protector -Wall -Wunused-but-set-parameter -Wno-free-nonheap-object -fno-omit-frame-pointer -std=c++0x -std=c++20 -fno-canonical-system-headers -Wno-builtin-macro-redefined -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\" -I bazel-out/k8-fastbuild/bin/external/flatbuffers/src/_virtual_includes/flatc -I bazel-out/k8-fastbuild/bin/external/flatbuffers/src/_virtual_includes/flatc_library -I bazel-out/k8-fastbuild/bin/external/flatbuffers/src/_virtual_includes/flatbuffers -I bazel-out/k8-fastbuild/bin/external/flatbuffers/grpc/src/compiler/_virtual_includes/cpp_generator -I bazel-out/k8-fastbuild/bin/external/flatbuffers/_virtual_includes/flatbuffers -I bazel-out/k8-fastbuild/bin/external/flatbuffers/grpc/src/compiler/_virtual_includes/go_generator -I bazel-out/k8-fastbuild/bin/external/flatbuffers/grpc/src/compiler/_virtual_includes/java_generator -I bazel-out/k8-fastbuild/bin/external/flatbuffers/grpc/src/compiler/_virtual_includes/python_generator -I bazel-out/k8-fastbuild/bin/external/flatbuffers/grpc/src/compiler/_virtual_includes/python_generator_private -I bazel-out/k8-fastbuild/bin/external/flatbuffers/grpc/src/compiler/_virtual_includes/swift_generator -I bazel-out/k8-fastbuild/bin/external/flatbuffers/grpc/src/compiler/_virtual_includes/ts_generator -iquote external/flatbuffers -iquote bazel-out/k8-fastbuild/bin/external/flatbuffers -x c++ -c external/flatbuffers/src/flatc_main.cpp"
+
+// eslint-disable-next-line max-len
 // command = "/usr/bin/gcc-11 -U_FORTIFY_SOURCE -fstack-protector -Wall -Wunused-but-set-parameter -Wno-free-nonheap-object -fno-omit-frame-pointer -std=c++0x -std=c++20 -Wno-builtin-macro-redefined -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\" -D BOOST_FUSION_DONT_USE_PREPROCESSED_FILES -D BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS -D BOOST_MPL_LIMIT_VECTOR_SIZE=50 -D FUSION_MAX_VECTOR_SIZE=30 -D BOOST_BIND_GLOBAL_PLACEHOLDERS -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/host/server/wui/_virtual_includes/wui -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/cpp_utils/reflection/_virtual_includes/reflection -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/wtx/server/_virtual_includes/server -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/cpp_utils/debug/_virtual_includes/debug -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/cpp_utils/signal_processors/_virtual_includes/signal_processors -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/wtx/server/_virtual_includes/wtx_common -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/host/server/data_logger/_virtual_includes/data_logger -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/host/server/data_formaters/_virtual_includes/data_formaters -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/host/server/instrument_model/_virtual_includes/instrument_model -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/cpp_utils/inline/_virtual_includes/inline -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/host/server/modules_connection/_virtual_includes/modules_connection -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/host/server/persistence/_virtual_includes/persistence -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/host/server/system_logger/_virtual_includes/system_logger -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/host/server/utils/_virtual_includes/utils -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/host/server/config/_virtual_includes/config -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/host/server/physical_values/_virtual_includes/physical_values -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/host/server/wui_controller/_virtual_includes/wui_controller -I /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/host/server/state_machine/_virtual_includes/state_machine -iquote /home/rh/box/cambustion/s600-solution-n/bazel-s600-solution-n/external/host -iquote /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/host -iquote /home/rh/box/cambustion/s600-solution-n/bazel-s600-solution-n/external/cpp_utils -iquote /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/cpp_utils -iquote /home/rh/box/cambustion/s600-solution-n/bazel-s600-solution-n/external/wtx -iquote /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/wtx -iquote /home/rh/box/cambustion/s600-solution-n/bazel-s600-solution-n/external/system -iquote /home/rh/box/cambustion/s600-solution-n/bazel-s600-solution-n/external/bazel_tools -isystem /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/wt/wt/include -isystem /home/rh/box/cambustion/s600-solution-n/bazel-out/k8-fastbuild/bin/external/boost/boost/include/boost-1_76 -x c++ -c /home/rh/box/cambustion/s600-solution-n/bazel-s600-solution-n/external/host/server/s600-host.cpp"
 
 // eslint-disable-next-line max-len
@@ -19,8 +22,8 @@ const { tokeniseCommand } = require('./lib');
 // eslint-disable-next-line max-len
 // command = "/usr/bin/gcc -U_FORTIFY_SOURCE -fstack-protector -Wall -Wunused-but-set-parameter -Wno-free-nonheap-object -fno-omit-frame-pointer -std=c++0x -fno-canonical-system-headers -Wno-builtin-macro-redefined -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\" -I bazel-out/k8-fastbuild/bin/server/_virtual_includes/server -I bazel-out/k8-fastbuild/bin/external/wt/_virtual_includes/wt -I bazel-out/k8-fastbuild/bin/external/rh_cpp_utils/reflection/_virtual_includes/reflection -I bazel-out/k8-fastbuild/bin/external/rh_cpp_utils/debug/_virtual_includes/debug -iquote . -iquote bazel-out/k8-fastbuild/bin -iquote external/wt -iquote bazel-out/k8-fastbuild/bin/external/wt -iquote external/system -iquote bazel-out/k8-fastbuild/bin/external/system -iquote external/rh_cpp_utils -iquote bazel-out/k8-fastbuild/bin/external/rh_cpp_utils -x c++ -c server/wtx/SimpleComboBox.cpp"
 
-// bazelWorkspacePath = "/home/rh/box/cambustion/s600-solution-n";
-// file = "server/wtx/SimpleComboBox.cpp";
+// bazelWorkspacePath = "/home/rh/box/cambustion/s600-index"
+// file = "external/flatbuffers/src/flatc_main.cpp"
 
 // /** @type {{ type: string, path: string }[]} */
 // const bazelAdditionalIncludes = [{
@@ -81,14 +84,21 @@ const unboxBuildRootExternal = (
 
   const relPathStr = pathMatch[1];
 
-  if(relPathStr in config.bazelExternalReplacements) {
-    const replacementPathStr = config.bazelExternalReplacements[relPathStr];
+  const replacedPaths = Object.keys(config.bazelExternalReplacements);
+  const replacedPathIndex = replacedPaths.findIndex((replacedPath) => (
+    relPathStr.startsWith(replacedPath)
+  ));
+
+  if(replacedPathIndex > -1) {
+    const replacedPath = replacedPaths[replacedPathIndex];
+    const replacementPathStr = config.bazelExternalReplacements[replacedPath];
 
     // Empty string is used to indicate that this path
     // should be excluded.
     if(replacementPathStr === '') { return ''; }
 
-    const absPathStr = path.join(bazelWorkspacePath, replacementPathStr);
+    const pathStr = replacementPathStr + relPathStr.slice(replacedPath.length);
+    const absPathStr = path.join(bazelWorkspacePath, pathStr);
 
     if(fs.existsSync(absPathStr)) {
       fileUnboxed = absPathStr;
@@ -211,13 +221,13 @@ const unbox = (
       }
       if(unboxedPathStr === '') { return result; }
       if(unboxedPathStr === null) {
-        throw new Error(
-          `"${pathStr}" cannot be unboxed."`,
-        );
+        throw new Error(`"${pathStr}" cannot be unboxed."`);
       }
 
       const unboxedValue = `${valueMatch[1]} ${unboxedPathStr}${valueMatch[3]}`;
-      result.push(unboxedValue);
+      if(result.findIndex((v) => v.trim() === unboxedValue.trim()) < 0) {
+        result.push(unboxedValue);
+      }
     }
     else { result.push(value); }
     return result;
