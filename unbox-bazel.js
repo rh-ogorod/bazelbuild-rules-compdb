@@ -80,7 +80,7 @@ const unboxBuildRootExternal = (
   if(path.isAbsolute(fileUnquoted)) { return null; }
 
   const pathMatch = fileUnquoted.match(bazelBuildRootExternalRegex);
-  if(pathMatch === null || pathMatch[1] === undefined) { return null; }
+  if(pathMatch == null || pathMatch[1] === undefined) { return null; }
 
   const relPathStr = pathMatch[1];
 
@@ -159,7 +159,7 @@ const unboxBuildOutExternal = (
 
   // fileUnquoted = "bazel-out/k8-fastbuild/bin/external/wt/wt/include"
   const pathMatch = fileUnquoted.match(bazelOutExternalRegex);
-  if(pathMatch === null || pathMatch[1] === undefined) { return null; }
+  if(pathMatch == null || pathMatch[1] === undefined) { return null; }
 
   const relPathStr = pathMatch[1];
 
@@ -202,7 +202,7 @@ const unbox = (
 ) => {
   const fileUnboxed = unboxBuildRootExternal(file, bazelWorkspacePath);
 
-  if(fileUnboxed === null) {
+  if(fileUnboxed == null) {
     throw new Error(
       `"${fileUnboxed}" does not exist. Original file = "${file}."`,
     );
@@ -216,11 +216,11 @@ const unbox = (
       const pathStr = valueMatch[2];
       let unboxedPathStr = unboxBuildRootExternal(pathStr, bazelWorkspacePath);
       if(unboxedPathStr === '') { return result; }
-      if(unboxedPathStr === null) {
+      if(unboxedPathStr == null) {
         unboxedPathStr = unboxBuildOutExternal(pathStr, bazelWorkspacePath);
       }
       if(unboxedPathStr === '') { return result; }
-      if(unboxedPathStr === null) {
+      if(unboxedPathStr == null) {
         throw new Error(`"${pathStr}" cannot be unboxed."`);
       }
 
@@ -307,7 +307,7 @@ const compDbIn = JSON.parse(compDbString);
 /** @type {CompDbEntry[]} */
 const compDbOut = [];
 
-if(config.includePrefixPath === null) {
+if(config.includePrefixPath == null) {
   compDbIn.forEach((compDbEntry) => (
     compDbOut.push(unbox(compDbEntry, bazelWorkspacePath))
   ));
