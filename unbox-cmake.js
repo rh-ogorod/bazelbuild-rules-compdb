@@ -1,6 +1,14 @@
 #!/usr/bin/env -S yarn node
 // Hey Emacs, this is -*- coding: utf-8 -*-
 
+/* eslint-disable prefer-regex-literals */
+
+// import fs from 'node:fs';
+// import path from 'node:path';
+// import os from 'node:os';
+
+// import { tokeniseCommand } from './lib';
+
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -39,22 +47,22 @@ const unboxBuildTmpdir = (
   let pathStr = file;
 
   let pathMatch = file.match(bazelBuildTmpdirRegex);
-  if(pathMatch) {
+  if (pathMatch) {
     const depName = pathMatch[2];
     const copyPathStr = path.join(depName, `copy_${depName}`, depName);
     pathStr = path.join(pathMatch[1], copyPathStr, pathMatch[3]);
   }
 
   pathMatch = pathStr.match(bazelSandboxRegex);
-  if(pathMatch) {
+  if (pathMatch) {
     let pathRelStr = pathMatch[1];
-    if(pathRelStr in config.bazelSandboxReplacements) {
+    if (pathRelStr in config.bazelSandboxReplacements) {
       pathRelStr = config.bazelExtBuildDepReplacements[pathRelStr];
     }
     pathStr = path.join(bazelWorkspacePath, pathRelStr);
   }
 
-  if(fs.existsSync(pathStr)) {
+  if (fs.existsSync(pathStr)) {
     fileUnboxed = pathStr;
   }
 
@@ -75,7 +83,7 @@ const unbox = (
 ) => {
   const fileUnboxed = unboxBuildTmpdir(file, bazelWorkspacePath);
 
-  if(fileUnboxed === null) {
+  if (fileUnboxed === null) {
     throw new Error(
       `"${fileUnboxed}" does not exist. Original file = "${file}."`,
     );
@@ -85,9 +93,9 @@ const unbox = (
 
   commandParts = commandParts.reduce((result, value) => {
     const valueMatch = value.match(/^(-I|-isystem|-iquote|-c)\s*(.*?)(\s*)$/);
-    if(valueMatch) {
+    if (valueMatch) {
       let pathStrOrig = valueMatch[2];
-      if(pathStrOrig === '.') {
+      if (pathStrOrig === '.') {
         result.push(value);
         return result;
       }
@@ -97,16 +105,16 @@ const unbox = (
       let pathStrProc = pathStrOrig;
 
       let pathMatch = pathStrProc.match(bazelExtBuildDepsRegex);
-      if(pathMatch) {
+      if (pathMatch) {
         const depStr = pathMatch[1];
-        if(depStr in config.bazelExtBuildDepReplacements) {
+        if (depStr in config.bazelExtBuildDepReplacements) {
           pathStrProc = config.bazelExtBuildDepReplacements[depStr];
           pathStrProc = path.join(bazelWorkspacePath, pathStrProc);
         }
       }
 
       pathMatch = pathStrProc.match(bazelBuildTmpdirRegex);
-      if(pathMatch) {
+      if (pathMatch) {
         const depName = pathMatch[2];
         const copyPathStr = path.join(depName, `copy_${depName}`, depName);
         pathStrProc = path.join(pathMatch[1], copyPathStr, pathMatch[3]);
@@ -115,42 +123,46 @@ const unbox = (
 
       let unboxedAbsPathStr = pathStrProc;
       pathMatch = pathStrProc.match(bazelSandboxRegex);
-      if(pathMatch) {
+      if (pathMatch) {
         let unboxedRelPathStr = pathMatch[1];
-        if(unboxedRelPathStr in config.bazelSandboxReplacements) {
+        if (unboxedRelPathStr in config.bazelSandboxReplacements) {
           unboxedRelPathStr =
             config.bazelSandboxReplacements[unboxedRelPathStr];
         }
-        unboxedAbsPathStr =
-          path.join(bazelWorkspacePath, unboxedRelPathStr);
+        unboxedAbsPathStr = path.join(bazelWorkspacePath, unboxedRelPathStr);
       }
 
-      if(fs.existsSync(unboxedAbsPathStr)) {
+      if (fs.existsSync(unboxedAbsPathStr)) {
         pathStrProc = unboxedAbsPathStr;
-      }
-      else {
+      } else {
         console.log(
-          [`unboxedAbsPathStr = ${unboxedAbsPathStr} does not exist.\n`,
-           `pathStrOrig = ${pathStrOrig}\n`,
-           `value = ${value}`,
+          [
+            `unboxedAbsPathStr = ${unboxedAbsPathStr} does not exist.\n`,
+            `pathStrOrig = ${pathStrOrig}\n`,
+            `value = ${value}`,
           ].join(''),
         );
         process.exit(1);
       }
 
-      if(pathStrProc.match(/\s/)) { pathStrProc = `"${pathStrProc}"`; }
+      if (pathStrProc.match(/\s/)) {
+        pathStrProc = `"${pathStrProc}"`;
+      }
 
       // eslint-disable-next-line no-param-reassign
       value = `${valueMatch[1]} ${pathStrProc}${valueMatch[3]}`;
       result.push(value);
+    } else {
+      result.push(value);
     }
-    else { result.push(value); }
     return result;
   }, /** @type {string[]} */ ([]));
 
   let commandUnboxed = commandParts.join(' ');
-  commandUnboxed =
-    commandUnboxed.replace(/ +-fno-canonical-system-headers/, '');
+  commandUnboxed = commandUnboxed.replace(
+    / +-fno-canonical-system-headers/,
+    '',
+  );
 
   return {
     command: commandUnboxed,
@@ -161,29 +173,31 @@ const unbox = (
 
 const args = process.argv.slice(2);
 
-if(!(args.length === 2 || args.length === 3)) {
-  throw new Error([
-    'Usage: unbox path/to/compile_commands.json',
-    'bazel/workspace/path [path/to/unbox-cmake.config.json]',
-  ].join(' '));
+if (!(args.length === 2 || args.length === 3)) {
+  throw new Error(
+    [
+      'Usage: unbox path/to/compile_commands.json',
+      'bazel/workspace/path [path/to/unbox-cmake.config.json]',
+    ].join(' '),
+  );
 }
 
 const compileCommandsPath = args[0].replace('~', os.homedir);
 
-if(!fs.existsSync(compileCommandsPath)) {
+if (!fs.existsSync(compileCommandsPath)) {
   throw Error(`${compileCommandsPath} compile commands file does not exist`);
 }
 
 const bazelWorkspacePath = args[1].replace('~', os.homedir);
 
-if(!fs.existsSync(bazelWorkspacePath)) {
+if (!fs.existsSync(bazelWorkspacePath)) {
   throw Error(`${bazelWorkspacePath} bazel workspace path does not exist`);
 }
 
-if(args[2] !== undefined) {
+if (args[2] !== undefined) {
   const unboxConfigPath = args[2].replace('~', os.homedir);
 
-  if(!fs.existsSync(unboxConfigPath)) {
+  if (!fs.existsSync(unboxConfigPath)) {
     throw Error(`${unboxConfigPath} unbox config does not exist`);
   }
 
@@ -203,16 +217,17 @@ const compDbIn = JSON.parse(compDbString);
 /** @type {CompDbEntry[]} */
 const compDbOut = [];
 
-if(config.includePrefixPath === null) {
-  compDbIn.forEach((compDbEntry) => (
-    compDbOut.push(unbox(compDbEntry, bazelWorkspacePath))
-  ));
-}
-else {
+if (config.includePrefixPath === null) {
   compDbIn.forEach((compDbEntry) => {
-    if(compDbEntry.file.startsWith(
-      /** @type {string} */ (config.includePrefixPath),
-    )) {
+    compDbOut.push(unbox(compDbEntry, bazelWorkspacePath));
+  });
+} else {
+  compDbIn.forEach((compDbEntry) => {
+    if (
+      compDbEntry.file.startsWith(
+        /** @type {string} */ (config.includePrefixPath),
+      )
+    ) {
       compDbOut.push(unbox(compDbEntry, bazelWorkspacePath));
     }
   });

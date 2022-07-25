@@ -67,10 +67,33 @@ const bazelBuildRootExternalRegex = RegExp('^external(?:/(.+))$');
 
 const packagesRelPathStr = 'packages';
 
+const unboxBuildRootLocal = (
+  /** @type {string} */ file,
+  /** @type {string} */ bazelWorkspacePath,
+) => {
+  /** @type {string | null} */
+  let fileUnboxed = null;
+
+  // Strip quatations if any
+  const fileUnquoted = file.replace(/^["']?(.+?)["']?$/, '$1');
+
+  if (fileUnquoted === '.') {
+    fileUnboxed = bazelWorkspacePath;
+  }
+  if (path.isAbsolute(fileUnquoted) && fs.existsSync(fileUnquoted)) {
+    fileUnboxed = fileUnquoted;
+  } else if (fs.existsSync(path.join(bazelWorkspacePath, fileUnquoted))) {
+    fileUnboxed = path.join(bazelWorkspacePath, fileUnquoted);
+  }
+
+  return fileUnboxed;
+};
+
 const unboxBuildRootExternal = (
   /** @type {string} */ file,
   /** @type {string} */ bazelWorkspacePath,
 ) => {
+  /** @type {string | null} */
   let fileUnboxed = null;
 
   // Strip quatations if any
@@ -85,7 +108,8 @@ const unboxBuildRootExternal = (
   }
 
   const pathMatch = fileUnquoted.match(bazelBuildRootExternalRegex);
-  if (pathMatch == null || pathMatch[1] === undefined) {
+
+  if (pathMatch == null || pathMatch[1] == null) {
     return null;
   }
 
@@ -142,7 +166,7 @@ const unboxBuildRootExternal = (
   }
 
   // Add quatations if necessary
-  if (fileUnboxed !== null && fileUnboxed.match(/\s/)) {
+  if (fileUnboxed != null && fileUnboxed.match(/\s/)) {
     fileUnboxed = `"${fileUnboxed}"`;
   }
 
@@ -153,6 +177,7 @@ const unboxBuildOutExternal = (
   /** @type {string} */ file,
   /** @type {string} */ bazelWorkspacePath,
 ) => {
+  /** @type {string | null} */
   let fileUnboxed = null;
 
   // Strip quatations if any
@@ -160,7 +185,7 @@ const unboxBuildOutExternal = (
 
   // buildRootExternal may only be relative.
   // Such as "external/host/server/s600-host.cpp"
-  // The following regexp match should cantch non-anbsolutes,
+  // The following regexp match should catch non-anbsolutes,
   // but leaving implicit check here to ease human logic.
   if (path.isAbsolute(fileUnquoted)) {
     return null;
@@ -171,7 +196,7 @@ const unboxBuildOutExternal = (
 
   // fileUnquoted = "bazel-out/k8-fastbuild/bin/external/wt/wt/include"
   const pathMatch = fileUnquoted.match(bazelOutExternalRegex);
-  if (pathMatch == null || pathMatch[1] === undefined) {
+  if (pathMatch == null || pathMatch[1] == null) {
     return null;
   }
 
@@ -220,7 +245,9 @@ const unbox = (
   /** @type {CompDbEntry} */ { command, file },
   /** @type {string} */ bazelWorkspacePath,
 ) => {
-  const fileUnboxed = unboxBuildRootExternal(file, bazelWorkspacePath);
+  const fileUnboxed =
+    unboxBuildRootLocal(file, bazelWorkspacePath) ??
+    unboxBuildRootExternal(file, bazelWorkspacePath);
 
   if (fileUnboxed == null) {
     throw new Error(
@@ -234,16 +261,21 @@ const unbox = (
     const valueMatch = value.match(/^(-I|-isystem|-iquote|-c)\s*(.*?)(\s*)$/);
     if (valueMatch) {
       const pathStr = valueMatch[2];
-      let unboxedPathStr = unboxBuildRootExternal(pathStr, bazelWorkspacePath);
-      if (unboxedPathStr === '') {
-        return result;
+
+      let unboxedPathStr = unboxBuildRootLocal(pathStr, bazelWorkspacePath);
+
+      if (unboxedPathStr == null) {
+        unboxedPathStr = unboxBuildRootExternal(pathStr, bazelWorkspacePath);
       }
+
       if (unboxedPathStr == null) {
         unboxedPathStr = unboxBuildOutExternal(pathStr, bazelWorkspacePath);
       }
+
       if (unboxedPathStr === '') {
         return result;
       }
+
       if (unboxedPathStr == null) {
         throw new Error(`"${pathStr}" cannot be unboxed."`);
       }

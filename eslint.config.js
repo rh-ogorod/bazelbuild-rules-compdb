@@ -8,8 +8,9 @@ module.exports = {
   ...config,
   rules: {
     ...config.rules,
+    '@typescript-eslint/no-var-requires': 'off',
     'no-restricted-syntax': 'off',
     'no-await-in-loop': 'off',
     'no-console': 'off',
-  }
+  },
 };
