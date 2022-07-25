@@ -1,6 +1,8 @@
 #!/usr/bin/env -S yarn node
 // Hey Emacs, this is -*- coding: utf-8 -*-
 
+/* eslint-disable prefer-regex-literals */
+
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -57,8 +59,9 @@ let config = {
   includePrefixPath: null,
 };
 
-const bazelOutExternalRegex =
-  RegExp('^bazel-out/k8-fastbuild/bin/external(?:/(.+))$');
+const bazelOutExternalRegex = RegExp(
+  '^bazel-out/k8-fastbuild/bin/external(?:/(.+))$',
+);
 
 const bazelBuildRootExternalRegex = RegExp('^external(?:/(.+))$');
 
@@ -77,62 +80,69 @@ const unboxBuildRootExternal = (
   // Such as "external/host/server/s600-host.cpp"
   // The following regexp match should cantch non-anbsolutes,
   // but leaving implicit check here to ease human logic.
-  if(path.isAbsolute(fileUnquoted)) { return null; }
+  if (path.isAbsolute(fileUnquoted)) {
+    return null;
+  }
 
   const pathMatch = fileUnquoted.match(bazelBuildRootExternalRegex);
-  if(pathMatch == null || pathMatch[1] === undefined) { return null; }
+  if (pathMatch == null || pathMatch[1] === undefined) {
+    return null;
+  }
 
   const relPathStr = pathMatch[1];
 
   const replacedPaths = Object.keys(config.bazelExternalReplacements);
-  const replacedPathIndex = replacedPaths.findIndex((replacedPath) => (
-    relPathStr.startsWith(replacedPath)
-  ));
+  const replacedPathIndex = replacedPaths.findIndex((replacedPath) => {
+    return relPathStr.startsWith(replacedPath);
+  });
 
-  if(replacedPathIndex > -1) {
+  if (replacedPathIndex > -1) {
     const replacedPath = replacedPaths[replacedPathIndex];
     const replacementPathStr = config.bazelExternalReplacements[replacedPath];
 
     // Empty string is used to indicate that this path
     // should be excluded.
-    if(replacementPathStr === '') { return ''; }
+    if (replacementPathStr === '') {
+      return '';
+    }
 
     const pathStr = replacementPathStr + relPathStr.slice(replacedPath.length);
     const absPathStr = path.join(bazelWorkspacePath, pathStr);
 
-    if(fs.existsSync(absPathStr)) {
+    if (fs.existsSync(absPathStr)) {
       fileUnboxed = absPathStr;
-    }
-    else {
+    } else {
       throw new Error(
-        [`Bazel external replacement path = "${replacementPathStr}"`,
-         `for the origianl bazel build root path "${relPathStr}"`,
-         'does not exist.',
+        [
+          `Bazel external replacement path = "${replacementPathStr}"`,
+          `for the origianl bazel build root path "${relPathStr}"`,
+          'does not exist.',
         ].join(' '),
       );
     }
-  }
-  else {
+  } else {
     // Check for possible "external" directory in Bazel build root.
     let absPathStr = path.join(bazelWorkspacePath, fileUnquoted);
 
-    if(fs.existsSync(absPathStr)) {
+    if (fs.existsSync(absPathStr)) {
       fileUnboxed = absPathStr;
-    }
-    else {
+    } else {
       // Replace "external" by a directory in Bazel build root
       // that contains "packages".
-      absPathStr =
-        path.join(bazelWorkspacePath, packagesRelPathStr, relPathStr);
+      absPathStr = path.join(
+        bazelWorkspacePath,
+        packagesRelPathStr,
+        relPathStr,
+      );
 
-      if(fs.existsSync(absPathStr)) {
+      if (fs.existsSync(absPathStr)) {
         fileUnboxed = absPathStr;
       }
     }
   }
 
   // Add quatations if necessary
-  if(fileUnboxed !== null && fileUnboxed.match(/\s/)) {
+  if (fileUnboxed !== null && fileUnboxed.match(/\s/)) {
     fileUnboxed = `"${fileUnboxed}"`;
   }
 
@@ -152,38 +162,48 @@ const unboxBuildOutExternal = (
   // Such as "external/host/server/s600-host.cpp"
   // The following regexp match should cantch non-anbsolutes,
   // but leaving implicit check here to ease human logic.
-  if(path.isAbsolute(fileUnquoted)) { return null; }
+  if (path.isAbsolute(fileUnquoted)) {
+    return null;
+  }
 
   // TODO: '.' and '..(/.*)?' paths must be computed from the externally
   //       provided build root.
 
   // fileUnquoted = "bazel-out/k8-fastbuild/bin/external/wt/wt/include"
   const pathMatch = fileUnquoted.match(bazelOutExternalRegex);
-  if(pathMatch == null || pathMatch[1] === undefined) { return null; }
+  if (pathMatch == null || pathMatch[1] === undefined) {
+    return null;
+  }
 
   const relPathStr = pathMatch[1];
 
-  if(relPathStr in config.bazelExternalReplacements) {
+  if (relPathStr in config.bazelExternalReplacements) {
     const replacementPathStr = config.bazelExternalReplacements[relPathStr];
 
     // Empty string is used to indicate that this path
     // should be excluded.
-    if(replacementPathStr === '') { return ''; }
+    if (replacementPathStr === '') {
+      return '';
+    }
 
     const absPathStr = path.join(bazelWorkspacePath, replacementPathStr);
 
-    if(fs.existsSync(absPathStr)) {
+    if (fs.existsSync(absPathStr)) {
       fileUnboxed = absPathStr;
     }
-  }
-  else {
+  } else {
     const absPathStr = path.join(bazelWorkspacePath, fileUnquoted);
-    if(fs.existsSync(absPathStr)) { fileUnboxed = absPathStr; }
-    else { return null; }
+    if (fs.existsSync(absPathStr)) {
+      fileUnboxed = absPathStr;
+    } else {
+      return null;
+    }
   }
 
   // Add quatations if necessary
-  if(fileUnboxed?.match(/\s/)) { fileUnboxed = `"${fileUnboxed}"`; }
+  if (fileUnboxed?.match(/\s/)) {
+    fileUnboxed = `"${fileUnboxed}"`;
+  }
 
   return fileUnboxed;
 };
@@ -202,7 +222,7 @@ const unbox = (
 ) => {
   const fileUnboxed = unboxBuildRootExternal(file, bazelWorkspacePath);
 
-  if(fileUnboxed == null) {
+  if (fileUnboxed == null) {
     throw new Error(
       `"${fileUnboxed}" does not exist. Original file = "${file}."`,
     );
@@ -212,38 +232,45 @@ const unbox = (
 
   commandParts = commandParts.reduce((result, value) => {
     const valueMatch = value.match(/^(-I|-isystem|-iquote|-c)\s*(.*?)(\s*)$/);
-    if(valueMatch) {
+    if (valueMatch) {
       const pathStr = valueMatch[2];
       let unboxedPathStr = unboxBuildRootExternal(pathStr, bazelWorkspacePath);
-      if(unboxedPathStr === '') { return result; }
-      if(unboxedPathStr == null) {
+      if (unboxedPathStr === '') {
+        return result;
+      }
+      if (unboxedPathStr == null) {
         unboxedPathStr = unboxBuildOutExternal(pathStr, bazelWorkspacePath);
       }
-      if(unboxedPathStr === '') { return result; }
-      if(unboxedPathStr == null) {
+      if (unboxedPathStr === '') {
+        return result;
+      }
+      if (unboxedPathStr == null) {
         throw new Error(`"${pathStr}" cannot be unboxed."`);
       }
 
       const unboxedValue = `${valueMatch[1]} ${unboxedPathStr}${valueMatch[3]}`;
-      if(result.findIndex((v) => v.trim() === unboxedValue.trim()) < 0) {
+      if (result.findIndex((v) => v.trim() === unboxedValue.trim()) < 0) {
         result.push(unboxedValue);
       }
+    } else {
+      result.push(value);
     }
-    else { result.push(value); }
     return result;
   }, /** @type {string[]} */ ([]));
 
   config.bazelAdditionalIncludes.forEach((include) => {
-    if(!['-I', '-isystem', '-iquote'].includes(include.type)) {
-      throw new Error([
-        `bazelAdditionalIncludes type in "${include}".`,
-        'Only allowed types are -I, -isystem, -iquote.',
-      ].join(' '));
+    if (!['-I', '-isystem', '-iquote'].includes(include.type)) {
+      throw new Error(
+        [
+          `bazelAdditionalIncludes type in "${include}".`,
+          'Only allowed types are -I, -isystem, -iquote.',
+        ].join(' '),
+      );
     }
 
     const absPathStr = path.join(bazelWorkspacePath, include.path);
 
-    if(!fs.existsSync(absPathStr)) {
+    if (!fs.existsSync(absPathStr)) {
       throw new Error(
         `bazelAdditionalIncludes path "${absPathStr}" does not exist."`,
       );
@@ -253,8 +280,10 @@ const unbox = (
   });
 
   let commandUnboxed = commandParts.join(' ');
-  commandUnboxed =
-    commandUnboxed.replace(/ +-fno-canonical-system-headers/, '');
+  commandUnboxed = commandUnboxed.replace(
+    / +-fno-canonical-system-headers/,
+    '',
+  );
 
   return {
     command: commandUnboxed,
@@ -265,29 +294,31 @@ const unbox = (
 
 const args = process.argv.slice(2);
 
-if(!(args.length === 2 || args.length === 3)) {
-  throw new Error([
-    'Usage: unbox path/to/compile_commands.json',
-    'bazel/workspace/path [include/prefix/path]',
-  ].join(' '));
+if (!(args.length === 2 || args.length === 3)) {
+  throw new Error(
+    [
+      'Usage: unbox path/to/compile_commands.json',
+      'bazel/workspace/path [include/prefix/path]',
+    ].join(' '),
+  );
 }
 
 const compileCommandsPath = args[0].replace('~', os.homedir);
 
-if(!fs.existsSync(compileCommandsPath)) {
+if (!fs.existsSync(compileCommandsPath)) {
   throw Error(`${compileCommandsPath} file does not exist`);
 }
 
 const bazelWorkspacePath = args[1].replace('~', os.homedir);
 
-if(!fs.existsSync(bazelWorkspacePath)) {
+if (!fs.existsSync(bazelWorkspacePath)) {
   throw Error(`${bazelWorkspacePath} bazelWorkspacePath does not exist`);
 }
 
-if(args[2] !== undefined) {
+if (args[2] !== undefined) {
   const unboxConfigPath = args[2].replace('~', os.homedir);
 
-  if(!fs.existsSync(unboxConfigPath)) {
+  if (!fs.existsSync(unboxConfigPath)) {
     throw Error(`${unboxConfigPath} unbox config does not exist`);
   }
 
@@ -307,16 +338,17 @@ const compDbIn = JSON.parse(compDbString);
 /** @type {CompDbEntry[]} */
 const compDbOut = [];
 
-if(config.includePrefixPath == null) {
-  compDbIn.forEach((compDbEntry) => (
-    compDbOut.push(unbox(compDbEntry, bazelWorkspacePath))
-  ));
-}
-else {
+if (config.includePrefixPath == null) {
   compDbIn.forEach((compDbEntry) => {
-    if(compDbEntry.file.startsWith(
-      /** @type {string} */ (config.includePrefixPath),
-    )) {
+    return compDbOut.push(unbox(compDbEntry, bazelWorkspacePath));
+  });
+} else {
+  compDbIn.forEach((compDbEntry) => {
+    if (
+      compDbEntry.file.startsWith(
+        /** @type {string} */ (config.includePrefixPath),
+      )
+    ) {
       compDbOut.push(unbox(compDbEntry, bazelWorkspacePath));
     }
   });
