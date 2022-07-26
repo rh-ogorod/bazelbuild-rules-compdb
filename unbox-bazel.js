@@ -3,6 +3,7 @@
 
 /* eslint-disable prefer-regex-literals */
 
+const process = require('node:process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -86,7 +87,11 @@ const unboxBuildRootLocal = (
     fileUnboxed = path.join(bazelWorkspacePath, fileUnquoted);
   }
 
-  return fileUnboxed;
+  if (fileUnboxed != null) {
+    return path.relative(bazelWorkspacePath, fileUnboxed);
+  }
+
+  return null;
 };
 
 const unboxBuildRootExternal = (
@@ -170,7 +175,11 @@ const unboxBuildRootExternal = (
     fileUnboxed = `"${fileUnboxed}"`;
   }
 
-  return fileUnboxed;
+  if (fileUnboxed != null) {
+    return path.relative(bazelWorkspacePath, fileUnboxed);
+  }
+
+  return null;
 };
 
 const unboxBuildOutExternal = (
@@ -230,7 +239,11 @@ const unboxBuildOutExternal = (
     fileUnboxed = `"${fileUnboxed}"`;
   }
 
-  return fileUnboxed;
+  if (fileUnboxed != null) {
+    return path.relative(bazelWorkspacePath, fileUnboxed);
+  }
+
+  return null;
 };
 
 /**
@@ -320,7 +333,7 @@ const unbox = (
   return {
     command: commandUnboxed,
     file: fileUnboxed,
-    directory: bazelWorkspacePath,
+    directory: '.',
   };
 };
 
@@ -346,6 +359,8 @@ const bazelWorkspacePath = args[1].replace('~', os.homedir);
 if (!fs.existsSync(bazelWorkspacePath)) {
   throw Error(`${bazelWorkspacePath} bazelWorkspacePath does not exist`);
 }
+
+process.chdir(bazelWorkspacePath);
 
 if (args[2] !== undefined) {
   const unboxConfigPath = args[2].replace('~', os.homedir);
