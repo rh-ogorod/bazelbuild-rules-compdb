@@ -1,5 +1,5 @@
 {
-  "name": "@ogorod/bazelbuild-rules_compdb",
+  "name": "@rh-ogorod/bazelbuild-rules_compdb",
   "version": "0.0.0",
   "description": "",
   "scripts": {
@@ -12,7 +12,7 @@
     "extends": "./eslint.config.js"
   },
   "dependencies": {
-    "@ogorod/js-configs": "workspace:*",
+    "@rh-ogorod/js-configs": "workspace:*",
     "optimist": "^0.6.1"
   },
   "devDependencies": {
