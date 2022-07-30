@@ -87,11 +87,11 @@ const unboxBuildRootLocal = (
     fileUnboxed = path.join(bazelWorkspacePath, fileUnquoted);
   }
 
-  if (fileUnboxed != null) {
-    return path.relative(bazelWorkspacePath, fileUnboxed);
-  }
+  // if (fileUnboxed != null) {
+  //   return path.relative(bazelWorkspacePath, fileUnboxed);
+  // }
 
-  return null;
+  return fileUnboxed;
 };
 
 const unboxBuildRootExternal = (
@@ -175,11 +175,11 @@ const unboxBuildRootExternal = (
     fileUnboxed = `"${fileUnboxed}"`;
   }
 
-  if (fileUnboxed != null) {
-    return path.relative(bazelWorkspacePath, fileUnboxed);
-  }
+  // if (fileUnboxed != null) {
+  //   return path.relative(bazelWorkspacePath, fileUnboxed);
+  // }
 
-  return null;
+  return fileUnboxed;
 };
 
 const unboxBuildOutExternal = (
@@ -239,11 +239,11 @@ const unboxBuildOutExternal = (
     fileUnboxed = `"${fileUnboxed}"`;
   }
 
-  if (fileUnboxed != null) {
-    return path.relative(bazelWorkspacePath, fileUnboxed);
-  }
+  // if (fileUnboxed != null) {
+  //   return path.relative(bazelWorkspacePath, fileUnboxed);
+  // }
 
-  return null;
+  return fileUnboxed;
 };
 
 /**
@@ -332,8 +332,9 @@ const unbox = (
 
   return {
     command: commandUnboxed,
+    // directory: '.',
+    directory: bazelWorkspacePath,
     file: fileUnboxed,
-    directory: '.',
   };
 };
 
