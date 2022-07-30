@@ -12,10 +12,10 @@
     "extends": "./eslint.config.js"
   },
   "dependencies": {
-    "@rh-ogorod/js-configs": "workspace:*",
     "optimist": "^0.6.1"
   },
   "devDependencies": {
+    "@rh-ogorod/js-configs": "workspace:*",
     "@types/node": "^16.11.45",
     "@typescript-eslint/eslint-plugin": "^5.30.7",
     "@typescript-eslint/parser": "^5.30.7",

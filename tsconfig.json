@@ -1,5 +1,5 @@
 {
-  "extends": "@ogorod/js-configs/node/tsconfig.json",
+  "extends": "@rh-ogorod/js-configs/node/tsconfig.json",
   "compilerOptions": {
     "allowJs": true,
     "moduleResolution": "node",
