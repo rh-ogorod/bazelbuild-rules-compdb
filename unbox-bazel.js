@@ -60,11 +60,11 @@ let config = {
   includePrefixPath: null,
 };
 
+const bazelBuildRootExternalRegex = RegExp('^external(?:/(.+))$');
+
 const bazelOutExternalRegex = RegExp(
   '^bazel-out/k8-fastbuild/bin/external(?:/(.+))$',
 );
-
-const bazelBuildRootExternalRegex = RegExp('^external(?:/(.+))$');
 
 const packagesRelPathStr = 'packages';
 
@@ -205,6 +205,7 @@ const unboxBuildOutExternal = (
 
   // fileUnquoted = "bazel-out/k8-fastbuild/bin/external/wt/wt/include"
   const pathMatch = fileUnquoted.match(bazelOutExternalRegex);
+
   if (pathMatch == null || pathMatch[1] == null) {
     return null;
   }
@@ -225,8 +226,11 @@ const unboxBuildOutExternal = (
     if (fs.existsSync(absPathStr)) {
       fileUnboxed = absPathStr;
     }
+    // } else if (relPathStr.match(/^.+\/_virtual_includes/)) {
+    //   const absPathStr = path.join(bazelWorkspacePath, fileUnquoted);
   } else {
     const absPathStr = path.join(bazelWorkspacePath, fileUnquoted);
+
     if (fs.existsSync(absPathStr)) {
       fileUnboxed = absPathStr;
     } else {
