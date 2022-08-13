@@ -17,7 +17,7 @@ const { tokeniseCommand } = require('./lib');
 
 /**
  * @typedef {{
- *   bazelExtBuildDepReplacements: Record<string, string>,
+ *   bazelExternalReplacements: Record<string, string>,
  *   bazelSandboxReplacements: Record<string, string>,
  *   includePrefixPath: string | null,
  * }} Config
@@ -25,7 +25,7 @@ const { tokeniseCommand } = require('./lib');
 
 /** @type {Config} */
 let config = {
-  bazelExtBuildDepReplacements: {},
+  bazelExternalReplacements: {},
   bazelSandboxReplacements: {},
   includePrefixPath: null,
 };
@@ -57,7 +57,13 @@ const unboxBuildTmpdir = (
   if (pathMatch) {
     let pathRelStr = pathMatch[1];
     if (pathRelStr in config.bazelSandboxReplacements) {
-      pathRelStr = config.bazelExtBuildDepReplacements[pathRelStr];
+      pathRelStr = config.bazelSandboxReplacements[pathRelStr];
+
+      // Empty string is used to indicate that this path
+      // should be excluded.
+      if (pathRelStr === '') {
+        return '';
+      }
     }
     pathStr = path.join(bazelWorkspacePath, pathRelStr);
   }
@@ -107,8 +113,8 @@ const unbox = (
       let pathMatch = pathStrProc.match(bazelExtBuildDepsRegex);
       if (pathMatch) {
         const depStr = pathMatch[1];
-        if (depStr in config.bazelExtBuildDepReplacements) {
-          pathStrProc = config.bazelExtBuildDepReplacements[depStr];
+        if (depStr in config.bazelExternalReplacements) {
+          pathStrProc = config.bazelExternalReplacements[depStr];
           pathStrProc = path.join(bazelWorkspacePath, pathStrProc);
         }
       }
