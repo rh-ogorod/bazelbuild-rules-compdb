@@ -46,7 +46,9 @@ const unboxBuildTmpdir = (
 
   let pathStr = file;
 
-  let pathMatch = file.match(bazelBuildTmpdirRegex);
+  console.log('******', pathStr);
+
+  let pathMatch = pathStr.match(bazelBuildTmpdirRegex);
   if (pathMatch) {
     const depName = pathMatch[2];
     const copyPathStr = path.join(depName, `copy_${depName}`, depName);
@@ -56,14 +58,9 @@ const unboxBuildTmpdir = (
   pathMatch = pathStr.match(bazelSandboxRegex);
   if (pathMatch) {
     let pathRelStr = pathMatch[1];
+
     if (pathRelStr in config.bazelSandboxReplacements) {
       pathRelStr = config.bazelSandboxReplacements[pathRelStr];
-
-      // Empty string is used to indicate that this path
-      // should be excluded.
-      if (pathRelStr === '') {
-        return '';
-      }
     }
     pathStr = path.join(bazelWorkspacePath, pathRelStr);
   }
