@@ -125,6 +125,26 @@ const loadCompDb = (compDbPath) => {
 };
 
 /**
+ * @typedef {{
+ *   '-I': string[],
+ *   '-isystem': string[],
+ *   '-iquote': string[],
+ *   '-c': string[],
+ * }} CompDbEntryPaths
+ */
+
+/**
+ * @param {CompDbEntryPaths}  paths - compillation database classified paths
+ * @param {UnboxConfig}  config - unbox config
+ * @param {string}  rootPath - root path for paths in compillation database
+ * @param {PathUnbox}  pathUnbox - path unboxing function
+ * @returns {CompDbEntryPaths} output compilation database
+ */
+const compDbEntryPathsUnbox = (paths, config, rootPath, pathUnbox) => {
+  return paths;
+};
+
+/**
  * @typedef {(
  *   pathIn: string,
  *   config: UnboxConfig,
@@ -140,43 +160,81 @@ const loadCompDb = (compDbPath) => {
  * @returns {CompDbEntry} output compilation database
  */
 const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
+  /** @type {CompDbEntryPaths} */
+  const compDbEntryPaths = {
+    '-I': [],
+    '-isystem': [],
+    '-iquote': [],
+    '-c': [],
+  };
+
   const fileUnboxed = pathUnbox(file, config, rootPath);
 
   const commandPartsIn = tokeniseCommand(command);
 
-  const commandPartsOut = commandPartsIn.reduce((result, value) => {
-    const valueMatch = value.match(/^(-I|-isystem|-iquote|-c)\s*(.*?)(\s*)$/);
+  const commandPartsOut = commandPartsIn.reduce((result, commandPartIn) => {
+    const valueMatch = commandPartIn.match(
+      /^(-I|-isystem|-iquote|-c)\s*(.*?)(\s*)$/,
+    );
 
     if (valueMatch) {
-      let pathOrig = valueMatch[2];
+      const pathType = /** @type {'-I' | '-isystem' | '-iquote' | '-c'} */ (
+        valueMatch[1]
+      );
+
+      const pathOrig = valueMatch[2];
 
       if (pathOrig === '.') {
-        result.push(value);
+        result.push(commandPartIn);
         return result;
       }
 
       // Strip quatations if any
-      pathOrig = pathOrig.replace(/^["']?(.+?)["']?$/, '$1');
-      pathOrig = path.normalize(pathOrig);
+      const pathOrigClean = path.normalize(
+        pathOrig.replace(/^["']?(.+?)["']?$/, '$1'),
+      );
 
-      let pathUnboxed = pathUnbox(pathOrig, config, rootPath);
+      compDbEntryPaths[pathType].push(pathOrigClean);
 
-      // Add quotations to paths with white spaces
-      if (pathUnboxed.match(/\s/)) {
-        pathUnboxed = `"${pathUnboxed}"`;
-      }
+      // let pathUnboxed = pathUnbox(pathOrigClean, config, rootPath);
 
-      // eslint-disable-next-line no-param-reassign
-      value = `${valueMatch[1]} ${pathUnboxed}${valueMatch[3]}`;
-      result.push(value);
+      // // Add quotations to paths with white spaces
+      // if (pathUnboxed.match(/\s/)) {
+      //   pathUnboxed = `"${pathUnboxed}"`;
+      // }
+
+      // const commandPartOut = `${pathType} ${pathUnboxed}`;
+      // result.push(commandPartOut);
     } else {
-      result.push(value);
+      result.push(commandPartIn);
     }
 
     return result;
   }, /** @type {string[]} */ ([]));
 
-  let commandUnboxed = commandPartsOut.join(' ');
+  const compDbEntryPathsUnboxed = compDbEntryPathsUnbox(
+    compDbEntryPaths,
+    config,
+    rootPath,
+    pathUnbox,
+  );
+
+  const commandPathsParts = Object.entries(compDbEntryPathsUnboxed).reduce(
+    (result, [pathType, pathsUnboxed]) => {
+      pathsUnboxed.forEach((pathUnboxed) => {
+        const pathUnboxedQuoted = pathUnboxed.match(/\s/)
+          ? `"${pathUnboxed}"`
+          : pathUnboxed;
+
+        result.push(`${pathType} ${pathUnboxedQuoted}`);
+      });
+
+      return result;
+    },
+    /** @type {string[]} */ ([]),
+  );
+
+  let commandUnboxed = commandPartsOut.concat(commandPathsParts).join(' ');
   commandUnboxed = commandUnboxed.replace(
     / +-fno-canonical-system-headers/,
     '',
