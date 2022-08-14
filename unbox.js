@@ -6,286 +6,54 @@
 const process = require('node:process');
 const fs = require('node:fs');
 const path = require('node:path');
-const os = require('node:os');
 
-const { tokeniseCommand } = require('./lib');
-
-/**
- * @typedef {{
- *   bazelWorkspacePath: string,
- *   compDbOutPath: string,
- *   compDbInPath: string,
- *   configPath?: string,
- * }} CliParams
- */
+const {
+  parseCliArgs,
+  loadConfig,
+  loadCompDb,
+  compDbUnboxEntries,
+} = require('./lib');
 
 /**
- * @typedef {{
- *   pathReplacements: { predicate: RegExp, replacement: string }[],
- *   additionalIncludes: { type: string, path: string }[],
- * }} UnboxConfig
+ * @param {string}  pathBoxed - path boxed
+ * @returns {string | null} path unboxed
  */
+const bazelSandboxUnbox = (pathBoxed) => {
+  const boxRegex = RegExp('/bazel/.+?/sandbox/.+?/execroot/[^/]+?/(.+)');
+  const pathMatch = pathBoxed.match(boxRegex);
 
-/**
- * @typedef {{
- *   command: string,
- *   file: string,
- *   directory: string,
- * }} CompDbEntry
- */
-
-/**
- * @param {string[]}  argv - CLI arguments
- * @returns {CliParams} This is the result
- */
-const parseCliArgs = (argv) => {
-  const args = argv.slice(2);
-
-  if (!(args.length === 3 || args.length === 4)) {
-    throw new Error(
-      [
-        'Usage: unbox.js',
-        'out/path/to/compile_commands.json',
-        'in/path/to/compile_commands.json',
-        'path/to/bazel/workspace',
-        '[path/to/unbox/config]',
-      ].join(' '),
-    );
+  if (pathMatch == null || pathMatch[1] == null) {
+    return null;
   }
 
-  const compDbOutPath = args[0].replace('~', os.homedir);
+  return pathMatch[1];
+};
 
-  const compDbInPath = args[1].replace('~', os.homedir);
+/** @type {import("./lib").PathUnbox} */
+const pathUnbox = (pathType, pathBoxed, config, rootPath) => {
+  let pathUnboxed = null;
 
-  if (!fs.existsSync(compDbInPath)) {
-    throw Error(`${compDbInPath} file does not exist`);
-  }
-
-  const bazelWorkspacePath = args[2].replace('~', os.homedir);
-
-  if (!fs.existsSync(bazelWorkspacePath)) {
-    throw Error(`${bazelWorkspacePath} bazelWorkspacePath does not exist`);
-  }
-
-  let configPath;
-
-  if (args[3] !== undefined) {
-    configPath = args[3].replace('~', os.homedir);
-
-    if (!fs.existsSync(configPath)) {
-      throw Error(`${configPath} unbox config does not exist`);
+  for (const { predicate, replacement } of config.pathReplacements) {
+    if (pathBoxed.match(predicate)) {
+      pathUnboxed = pathBoxed.replace(predicate, replacement);
+      break;
     }
   }
 
-  return {
-    bazelWorkspacePath,
-    compDbOutPath,
-    compDbInPath,
-    configPath,
-  };
-};
-
-/**
- * @param {string}  [configPath] - unbox config path
- * @returns {UnboxConfig} loaded config
- */
-const loadConfig = (configPath) => {
-  const configDefault = {
-    pathReplacements: [],
-    additionalIncludes: [],
-  };
-
-  if (configPath === undefined) {
-    return configDefault;
+  if (pathUnboxed == null) {
+    pathUnboxed = bazelSandboxUnbox(pathBoxed);
   }
 
-  // const userConfigString = fs.readFileSync(configPath, 'utf8');
+  if (pathUnboxed == null) {
+    pathUnboxed = pathBoxed;
+  }
 
-  // /** @type {UnboxConfig} */
-  // const userConfig = JSON.parse(userConfigString);
+  if (!fs.existsSync(path.join(rootPath, pathUnboxed))) {
+    throw Error(path.join(rootPath, pathUnboxed));
+  }
 
-  /* eslint-disable import/no-dynamic-require, global-require */
-
-  // /** @type {UnboxConfig} */
-  const userConfig = require(configPath);
-
-  /* eslint-enable import/no-dynamic-require, global-require */
-
-  return { ...configDefault, ...userConfig };
-};
-
-/**
- * @param {string}  compDbPath - unbox config path
- * @returns {CompDbEntry[]} loaded compilation database
- */
-const loadCompDb = (compDbPath) => {
-  const compDbString = fs.readFileSync(compDbPath, 'utf8');
-
-  return JSON.parse(compDbString);
-};
-
-/**
- * @typedef {{
- *   '-I': string[],
- *   '-isystem': string[],
- *   '-iquote': string[],
- *   '-c': string[],
- * }} CompDbEntryPaths
- */
-
-/**
- * @param {CompDbEntryPaths}  compDbEntryPaths - comp db entry paths
- * @param {UnboxConfig}  config - unbox config
- * @param {string}  rootPath - root path for paths in comp db
- * @param {PathUnbox}  pathUnbox - path unboxing function
- * @returns {CompDbEntryPaths} output compilation database
- */
-const compDbEntryPathsUnbox = (
-  compDbEntryPaths,
-  config,
-  rootPath,
-  pathUnbox,
-) => {
-  const compDbEntryPathsSetUnboxed = {
-    '-I': /** @type {Set<string>} */ (new Set()),
-    '-isystem': /** @type {Set<string>} */ (new Set()),
-    '-iquote': /** @type {Set<string>} */ (new Set()),
-    '-c': /** @type {Set<string>} */ (new Set()),
-  };
-
-  Object.entries(compDbEntryPaths).forEach(([pathType, pathsBoxed]) => {
-    pathsBoxed.forEach((pathBoxed) => {
-      const pathUnboxed = pathUnbox(pathBoxed, config, rootPath);
-
-      if (pathUnboxed === '') {
-        return;
-      }
-
-      // Remove duplicates using Set
-      compDbEntryPathsSetUnboxed[
-        /** @type {'-I' | '-isystem' | '-iquote' | '-c'} */ (pathType)
-      ].add(pathUnboxed);
-    });
-  });
-
-  return Object.entries(compDbEntryPathsSetUnboxed).reduce(
-    (result, [pathType, pathsSetUnboxed]) => {
-      result[pathType] = [...pathsSetUnboxed];
-      return result;
-    },
-    /** @type {CompDbEntryPaths} */ ({}),
-  );
-};
-
-/**
- * @typedef {(
- *   pathIn: string,
- *   config: UnboxConfig,
- *   rootPath: string
- * ) => string} PathUnbox
- */
-
-/**
- * @param {CompDbEntry}  compDbEntry - input comp db
- * @param {UnboxConfig}  config - unbox config
- * @param {string}  rootPath - root path for paths in comp db
- * @param {PathUnbox}  pathUnbox - path unboxing function
- * @returns {CompDbEntry} output compilation database
- */
-const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
-  /** @type {CompDbEntryPaths} */
-  const compDbEntryPaths = {
-    '-I': [],
-    '-isystem': [],
-    '-iquote': [],
-    '-c': [],
-  };
-
-  const fileUnboxed = pathUnbox(file, config, rootPath);
-
-  const commandPartsIn = tokeniseCommand(command);
-
-  const commandPartsOut = commandPartsIn.reduce((result, commandPartIn) => {
-    const valueMatch = commandPartIn.match(
-      /^(-I|-isystem|-iquote|-c)\s*(.*?)(\s*)$/,
-    );
-
-    if (valueMatch) {
-      const pathType = /** @type {'-I' | '-isystem' | '-iquote' | '-c'} */ (
-        valueMatch[1]
-      );
-
-      const pathOrig = valueMatch[2];
-
-      if (pathOrig === '.') {
-        result.push(commandPartIn);
-        return result;
-      }
-
-      // Strip quatations if any
-      const pathOrigClean = path.normalize(
-        pathOrig.replace(/^["']?(.+?)["']?$/, '$1'),
-      );
-
-      compDbEntryPaths[pathType].push(pathOrigClean);
-    } else {
-      result.push(commandPartIn);
-    }
-
-    return result;
-  }, /** @type {string[]} */ ([]));
-
-  const compDbEntryPathsUnboxed = compDbEntryPathsUnbox(
-    compDbEntryPaths,
-    config,
-    rootPath,
-    pathUnbox,
-  );
-
-  const commandPathsParts = Object.entries(compDbEntryPathsUnboxed).reduce(
-    (result, [pathType, pathsUnboxed]) => {
-      pathsUnboxed.forEach((pathUnboxed) => {
-        const pathUnboxedQuoted = pathUnboxed.match(/\s/)
-          ? `"${pathUnboxed}"`
-          : pathUnboxed;
-
-        result.push(`${pathType} ${pathUnboxedQuoted}`);
-      });
-
-      return result;
-    },
-    /** @type {string[]} */ ([]),
-  );
-
-  let commandUnboxed = commandPartsOut.concat(commandPathsParts).join(' ');
-  commandUnboxed = commandUnboxed.replace(
-    / +-fno-canonical-system-headers/,
-    '',
-  );
-
-  return {
-    command: commandUnboxed,
-    file: fileUnboxed,
-    directory: rootPath,
-  };
-};
-
-/**
- * @param {CompDbEntry[]}  compDb - input comp db
- * @param {UnboxConfig}  config - unbox config
- * @param {string}  rootPath - root path for paths in comp db
- * @param {PathUnbox}  pathUnbox - path unboxing function
- * @returns {CompDbEntry[]} output compilation database
- */
-const compDbUnboxEntries = (compDb, config, rootPath, pathUnbox) => {
-  /** @type {CompDbEntry[]} */
-  const result = [];
-
-  compDb.forEach((compDbEntry) => {
-    result.push(compDbEntryUnbox(compDbEntry, config, rootPath, pathUnbox));
-  });
-
-  return result;
+  console.log(pathType, pathUnboxed);
+  return pathUnboxed;
 };
 
 const cliParams = parseCliArgs(process.argv);
@@ -299,10 +67,7 @@ const compDbOut = compDbUnboxEntries(
   compDbIn,
   unboxConfig,
   cliParams.bazelWorkspacePath,
-  (inPath, config, rootPath) => {
-    console.log(inPath);
-    return inPath;
-  },
+  pathUnbox,
 );
 
 fs.writeFileSync(cliParams.compDbOutPath, JSON.stringify(compDbOut, null, 2));
