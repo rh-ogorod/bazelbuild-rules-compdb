@@ -21,8 +21,8 @@ const { tokeniseCommand } = require('./lib');
 
 /**
  * @typedef {{
- *   bazelAdditionalIncludes: { type: string, path: string }[],
- *   pathReplacements: Record<string, string>,
+ *   pathReplacements: { predicate: RegExp, replacement: string }[],
+ *   additionalIncludes: { type: string, path: string }[],
  * }} UnboxConfig
  */
 
@@ -91,18 +91,25 @@ const parseCliArgs = (argv) => {
  */
 const loadConfig = (configPath) => {
   const configDefault = {
-    bazelAdditionalIncludes: [],
-    pathReplacements: {},
+    pathReplacements: [],
+    additionalIncludes: [],
   };
 
   if (configPath === undefined) {
     return configDefault;
   }
 
-  const userConfigString = fs.readFileSync(configPath, 'utf8');
+  // const userConfigString = fs.readFileSync(configPath, 'utf8');
 
-  /** @type {UnboxConfig} */
-  const userConfig = JSON.parse(userConfigString);
+  // /** @type {UnboxConfig} */
+  // const userConfig = JSON.parse(userConfigString);
+
+  /* eslint-disable import/no-dynamic-require, global-require */
+
+  // /** @type {UnboxConfig} */
+  const userConfig = require(configPath);
+
+  /* eslint-enable import/no-dynamic-require, global-require */
 
   return { ...configDefault, ...userConfig };
 };
@@ -118,9 +125,11 @@ const loadCompDb = (compDbPath) => {
 };
 
 /**
- * @typedef {
-     (inPath: string, config: UnboxConfig, rootPath: string) => string
-   } PathUnbox
+ * @typedef {(
+ *   pathIn: string,
+ *   config: UnboxConfig,
+ *   rootPath: string
+ * ) => string} PathUnbox
  */
 
 /**
@@ -187,7 +196,7 @@ const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
  * @param {PathUnbox}  pathUnbox - path unboxing function
  * @returns {CompDbEntry[]} output compilation database
  */
-const compDbPathsUnbox = (compDb, config, rootPath, pathUnbox) => {
+const compDbUnboxEntries = (compDb, config, rootPath, pathUnbox) => {
   /** @type {CompDbEntry[]} */
   const result = [];
 
@@ -205,11 +214,12 @@ process.chdir(cliParams.bazelWorkspacePath);
 const unboxConfig = loadConfig(cliParams.configPath);
 const compDbIn = loadCompDb(cliParams.compDbInPath);
 
-const compDbOut = compDbPathsUnbox(
+const compDbOut = compDbUnboxEntries(
   compDbIn,
   unboxConfig,
   cliParams.bazelWorkspacePath,
   (inPath, config, rootPath) => {
+    console.log(inPath);
     return inPath;
   },
 );
