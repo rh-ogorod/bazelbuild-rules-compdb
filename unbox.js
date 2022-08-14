@@ -134,14 +134,47 @@ const loadCompDb = (compDbPath) => {
  */
 
 /**
- * @param {CompDbEntryPaths}  paths - compillation database classified paths
+ * @param {CompDbEntryPaths}  compDbEntryPaths - comp db entry paths
  * @param {UnboxConfig}  config - unbox config
- * @param {string}  rootPath - root path for paths in compillation database
+ * @param {string}  rootPath - root path for paths in comp db
  * @param {PathUnbox}  pathUnbox - path unboxing function
  * @returns {CompDbEntryPaths} output compilation database
  */
-const compDbEntryPathsUnbox = (paths, config, rootPath, pathUnbox) => {
-  return paths;
+const compDbEntryPathsUnbox = (
+  compDbEntryPaths,
+  config,
+  rootPath,
+  pathUnbox,
+) => {
+  const compDbEntryPathsSetUnboxed = {
+    '-I': /** @type {Set<string>} */ (new Set()),
+    '-isystem': /** @type {Set<string>} */ (new Set()),
+    '-iquote': /** @type {Set<string>} */ (new Set()),
+    '-c': /** @type {Set<string>} */ (new Set()),
+  };
+
+  Object.entries(compDbEntryPaths).forEach(([pathType, pathsBoxed]) => {
+    pathsBoxed.forEach((pathBoxed) => {
+      const pathUnboxed = pathUnbox(pathBoxed, config, rootPath);
+
+      if (pathUnboxed === '') {
+        return;
+      }
+
+      // Remove duplicates using Set
+      compDbEntryPathsSetUnboxed[
+        /** @type {'-I' | '-isystem' | '-iquote' | '-c'} */ (pathType)
+      ].add(pathUnboxed);
+    });
+  });
+
+  return Object.entries(compDbEntryPathsSetUnboxed).reduce(
+    (result, [pathType, pathsSetUnboxed]) => {
+      result[pathType] = [...pathsSetUnboxed];
+      return result;
+    },
+    /** @type {CompDbEntryPaths} */ ({}),
+  );
 };
 
 /**
@@ -153,9 +186,9 @@ const compDbEntryPathsUnbox = (paths, config, rootPath, pathUnbox) => {
  */
 
 /**
- * @param {CompDbEntry}  compDbEntry - input compillation database
+ * @param {CompDbEntry}  compDbEntry - input comp db
  * @param {UnboxConfig}  config - unbox config
- * @param {string}  rootPath - root path for paths in compillation database
+ * @param {string}  rootPath - root path for paths in comp db
  * @param {PathUnbox}  pathUnbox - path unboxing function
  * @returns {CompDbEntry} output compilation database
  */
@@ -195,16 +228,6 @@ const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
       );
 
       compDbEntryPaths[pathType].push(pathOrigClean);
-
-      // let pathUnboxed = pathUnbox(pathOrigClean, config, rootPath);
-
-      // // Add quotations to paths with white spaces
-      // if (pathUnboxed.match(/\s/)) {
-      //   pathUnboxed = `"${pathUnboxed}"`;
-      // }
-
-      // const commandPartOut = `${pathType} ${pathUnboxed}`;
-      // result.push(commandPartOut);
     } else {
       result.push(commandPartIn);
     }
@@ -248,9 +271,9 @@ const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
 };
 
 /**
- * @param {CompDbEntry[]}  compDb - input compillation database
+ * @param {CompDbEntry[]}  compDb - input comp db
  * @param {UnboxConfig}  config - unbox config
- * @param {string}  rootPath - root path for paths in compillation database
+ * @param {string}  rootPath - root path for paths in comp db
  * @param {PathUnbox}  pathUnbox - path unboxing function
  * @returns {CompDbEntry[]} output compilation database
  */
