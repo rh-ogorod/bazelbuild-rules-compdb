@@ -33,6 +33,12 @@ const bazelSandboxUnbox = (pathBoxed) => {
 const pathUnbox = (pathType, pathBoxed, config, rootPath) => {
   let pathUnboxed = null;
 
+  for (const ignoreRegexp of config.ignorePaths) {
+    if (pathBoxed.match(ignoreRegexp)) {
+      return '';
+    }
+  }
+
   for (const { predicate, replacement } of config.pathReplacements) {
     if (pathBoxed.match(predicate)) {
       pathUnboxed = pathBoxed.replace(predicate, replacement);
@@ -49,7 +55,9 @@ const pathUnbox = (pathType, pathBoxed, config, rootPath) => {
   }
 
   if (!fs.existsSync(path.join(rootPath, pathUnboxed))) {
-    throw Error(path.join(rootPath, pathUnboxed));
+    throw Error(
+      `Path ${pathType} ${path.join(rootPath, pathUnboxed)} does not exist.`,
+    );
   }
 
   console.log(pathType, pathUnboxed);

@@ -70,6 +70,7 @@ const tokeniseCommand = (/** @type {string} */ command) => {
 /**
  * @typedef {{
  *   pathReplacements: { predicate: RegExp, replacement: string }[],
+ *   ignorePaths: RegExp[],
  *   additionalIncludes: { type: string, path: string }[],
  * }} UnboxConfig
  */
@@ -314,6 +315,7 @@ const loadCompDb = (compDbPath) => {
 const loadConfig = (configPath) => {
   const configDefault = {
     pathReplacements: [],
+    ignorePaths: [],
     additionalIncludes: [],
   };
 
