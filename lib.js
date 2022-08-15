@@ -222,14 +222,31 @@ const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
 
   const commandPartsOutLast =
     commandPartsOut.length > 0 ? commandPartsOut.length - 1 : 0;
-  const commandFile = commandPartsOut[commandPartsOutLast];
+
+  const commandFileUnboxed = pathUnbox(
+    'file',
+    commandPartsOut[commandPartsOutLast],
+    config,
+    rootPath,
+  );
+
   const commandPartsOutNoFile = commandPartsOut.slice(0, commandPartsOutLast);
 
   const commandUnboxed = commandPartsOutNoFile
     .concat(commandPathsParts)
-    .concat([commandFile])
+    .concat([commandFileUnboxed])
     .join(' ')
     .replace(/ +-fno-canonical-system-headers/, '');
+
+  if (commandFileUnboxed !== fileUnboxed) {
+    throw Error(
+      [
+        `Unpacked command flie "${commandFileUnboxed}"`,
+        `and comp db entry file "${commandUnboxed}"`,
+        'are not equal.',
+      ].join(' '),
+    );
+  }
 
   return {
     command: commandUnboxed,
@@ -322,24 +339,19 @@ const loadCompDb = (compDbPath) => {
  * @returns {UnboxConfig} loaded config
  */
 const loadConfig = (configPath) => {
-  const configDefault = {
-    pathReplacements: [],
-    ignorePaths: [],
-    additionalIncludes: [],
-  };
-
-  if (configPath === undefined) {
-    return configDefault;
-  }
-
   /* eslint-disable import/no-dynamic-require, global-require */
 
-  // /** @type {UnboxConfig} */
-  const userConfig = require(configPath);
+  const userConfig = configPath
+    ? /** @type {UnboxConfig} */ (require(configPath))
+    : undefined;
 
   /* eslint-enable import/no-dynamic-require, global-require */
 
-  return { ...configDefault, ...userConfig };
+  return {
+    pathReplacements: userConfig?.pathReplacements ?? [],
+    ignorePaths: userConfig?.ignorePaths ?? [],
+    additionalIncludes: userConfig?.additionalIncludes ?? [],
+  };
 };
 
 module.exports = {

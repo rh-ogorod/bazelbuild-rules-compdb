@@ -54,6 +54,10 @@ const pathUnbox = (pathType, pathBoxed, config, rootPath) => {
     pathUnboxed = pathBoxed;
   }
 
+  if (path.isAbsolute(pathUnboxed)) {
+    pathUnboxed = path.relative(rootPath, pathUnboxed);
+  }
+
   if (!fs.existsSync(path.join(rootPath, pathUnboxed))) {
     throw Error(
       `Path ${pathType} ${path.join(rootPath, pathUnboxed)} does not exist.`,
