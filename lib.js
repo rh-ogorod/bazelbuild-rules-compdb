@@ -219,16 +219,17 @@ const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
   );
 
   console.log('******', commandPartsOut);
-  // let commandUnboxed = commandPartsOut
-  //   .slice(0, commandPartsOut.length - 1)
-  //   .concat(commandPathsParts)
-  //   .slice(commandPartsOut.length - 2)
-  //   .join(' ');
-  let commandUnboxed = commandPartsOut.concat(commandPathsParts).join(' ');
-  commandUnboxed = commandUnboxed.replace(
-    / +-fno-canonical-system-headers/,
-    '',
-  );
+
+  const commandPartsOutLast =
+    commandPartsOut.length > 0 ? commandPartsOut.length - 1 : 0;
+  const commandFile = commandPartsOut[commandPartsOutLast];
+  const commandPartsOutNoFile = commandPartsOut.slice(0, commandPartsOutLast);
+
+  const commandUnboxed = commandPartsOutNoFile
+    .concat(commandPathsParts)
+    .concat([commandFile])
+    .join(' ')
+    .replace(/ +-fno-canonical-system-headers/, '');
 
   return {
     command: commandUnboxed,
