@@ -76,7 +76,7 @@ const tokeniseCommand = (/** @type {string} */ command) => {
  * @typedef {{
  *   pathReplacements: { predicate: RegExp, replacement: string }[],
  *   ignorePaths: RegExp[],
- *   additionalIncludes: { type: string, path: string }[],
+ *   additionalPaths: { type: string, value: string }[],
  * }} UnboxConfig
  */
 
@@ -195,6 +195,10 @@ const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
 
     return result;
   }, /** @type {string[]} */ ([]));
+
+  config.additionalPaths.forEach(({ type, value }) => {
+    compDbEntryPaths[type].push(value);
+  });
 
   const compDbEntryPathsUnboxed = compDbEntryPathsUnbox(
     compDbEntryPaths,
@@ -350,7 +354,7 @@ const loadConfig = (configPath) => {
   return {
     pathReplacements: userConfig?.pathReplacements ?? [],
     ignorePaths: userConfig?.ignorePaths ?? [],
-    additionalIncludes: userConfig?.additionalIncludes ?? [],
+    additionalPaths: userConfig?.additionalPaths ?? [],
   };
 };
 
