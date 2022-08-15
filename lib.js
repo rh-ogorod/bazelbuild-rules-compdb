@@ -17,6 +17,7 @@ const tokeniseCommand = (/** @type {string} */ command) => {
     } else {
       last = '';
     }
+
     if (last === '"' || last === "'") {
       result[result.length - 1] += value;
     } else if (value === '"' || value === "'") {
@@ -27,6 +28,7 @@ const tokeniseCommand = (/** @type {string} */ command) => {
       // eslint-disable-next-line no-param-reassign
       result = result.concat(value.split(/([^\s](?:[^\s\\]|\\.)*)/g));
     }
+
     return result;
   }, /** @type {string[]} */ ([]));
 
@@ -35,14 +37,16 @@ const tokeniseCommand = (/** @type {string} */ command) => {
     if (value === '') {
       return result;
     }
+
     let last;
     if (result.length > 0) {
       last = result[result.length - 1];
     } else {
       last = '';
     }
+
     if (
-      last.match(/^(?:-I|-isystem|-iquote|-c|-x)\s*$/) ||
+      last.match(/^(?:-I|-isystem|-iquote|-c)\s*$/) ||
       last.match(/=\s*$/) ||
       value.match(/^\s+$/)
     ) {
@@ -50,6 +54,7 @@ const tokeniseCommand = (/** @type {string} */ command) => {
     } else {
       result.push(value);
     }
+
     return result;
   }, /** @type {string[]} */ ([]));
 
