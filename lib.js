@@ -46,7 +46,7 @@ const tokeniseCommand = (/** @type {string} */ command) => {
     }
 
     if (
-      last.match(/^(?:-I|-isystem|-iquote|-c)\s*$/) ||
+      last.match(/^(?:-I|-isystem|-iquote)\s*$/) ||
       last.match(/=\s*$/) ||
       value.match(/^\s+$/)
     ) {
@@ -93,7 +93,6 @@ const tokeniseCommand = (/** @type {string} */ command) => {
  *   '-I': string[],
  *   '-isystem': string[],
  *   '-iquote': string[],
- *   '-c': string[],
  * }} CompDbEntryPaths
  */
 
@@ -114,7 +113,6 @@ const compDbEntryPathsUnbox = (
     '-I': /** @type {Set<string>} */ (new Set()),
     '-isystem': /** @type {Set<string>} */ (new Set()),
     '-iquote': /** @type {Set<string>} */ (new Set()),
-    '-c': /** @type {Set<string>} */ (new Set()),
   };
 
   /** @type {[keyof CompDbEntryPaths, string[]][]} */
@@ -142,7 +140,7 @@ const compDbEntryPathsUnbox = (
 
 /**
  * @typedef {(
- *   pathType: 'file' | '-I' | '-isystem' | '-iquote' | '-c',
+ *   pathType: 'file' | '-I' | '-isystem' | '-iquote',
  *   pathBoxed: string,
  *   config: UnboxConfig,
  *   rootPath: string
@@ -162,7 +160,6 @@ const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
     '-I': [],
     '-isystem': [],
     '-iquote': [],
-    '-c': [],
   };
 
   const fileUnboxed = pathUnbox('file', file, config, rootPath);
@@ -171,11 +168,11 @@ const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
 
   const commandPartsOut = commandPartsIn.reduce((result, commandPartIn) => {
     const valueMatch = commandPartIn.match(
-      /^(-I|-isystem|-iquote|-c)\s*(.*?)(\s*)$/,
+      /^(-I|-isystem|-iquote)\s*(.*?)(\s*)$/,
     );
 
     if (valueMatch) {
-      const pathType = /** @type {'-I' | '-isystem' | '-iquote' | '-c'} */ (
+      const pathType = /** @type {'-I' | '-isystem' | '-iquote'} */ (
         valueMatch[1]
       );
 
@@ -221,6 +218,12 @@ const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
     /** @type {string[]} */ ([]),
   );
 
+  console.log('******', commandPartsOut);
+  // let commandUnboxed = commandPartsOut
+  //   .slice(0, commandPartsOut.length - 1)
+  //   .concat(commandPathsParts)
+  //   .slice(commandPartsOut.length - 2)
+  //   .join(' ');
   let commandUnboxed = commandPartsOut.concat(commandPathsParts).join(' ');
   commandUnboxed = commandUnboxed.replace(
     / +-fno-canonical-system-headers/,
