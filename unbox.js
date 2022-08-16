@@ -64,7 +64,7 @@ const pathUnbox = (pathType, pathBoxed, config, rootPath) => {
     );
   }
 
-  console.log(pathType, pathUnboxed);
+  // console.log(pathType, pathUnboxed);
   return pathUnboxed;
 };
 

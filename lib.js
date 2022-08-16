@@ -245,7 +245,7 @@ const compDbEntryUnbox = (
     /** @type {string[]} */ ([]),
   );
 
-  console.log('******', commandPartsOut);
+  // console.log('******', commandPartsOut);
 
   const commandPartsOutLast =
     commandPartsOut.length > 0 ? commandPartsOut.length - 1 : 0;
