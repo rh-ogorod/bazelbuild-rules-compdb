@@ -64,6 +64,14 @@ const tokeniseCommand = (/** @type {string} */ command) => {
 };
 
 /**
+ * @param {string}  pathRaw - input raw path
+ * @returns {string} output clean path
+ */
+const cleanPath = (pathRaw) => {
+  return path.normalize(pathRaw.replace(/^["']?(.+?)["']?$/, '$1'));
+};
+
+/**
  * @typedef {{
  *   bazelWorkspacePath: string,
  *   compDbOutPath: string,
@@ -84,7 +92,7 @@ const tokeniseCommand = (/** @type {string} */ command) => {
  * @typedef {{
  *   command: string,
  *   file: string,
- *   directory: string,
+ *   directory?: string,
  * }} CompDbEntry
  */
 
@@ -154,7 +162,15 @@ const compDbEntryPathsUnbox = (
  * @param {PathUnbox}  pathUnbox - path unboxing function
  * @returns {CompDbEntry} output compilation database
  */
-const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
+const compDbEntryUnbox = (
+  { command, file: fileIn, directory: directoryIn },
+  config,
+  rootPath,
+  pathUnbox,
+) => {
+  const directory = cleanPath(directoryIn ?? '');
+  const file = cleanPath(fileIn);
+
   /** @type {CompDbEntryPaths} */
   const compDbEntryPaths = {
     '-I': [],
@@ -162,7 +178,12 @@ const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
     '-iquote': [],
   };
 
-  const fileUnboxed = pathUnbox('file', file, config, rootPath);
+  const fileUnboxed = pathUnbox(
+    'file',
+    path.isAbsolute(file) ? file : path.join(directory, file),
+    config,
+    rootPath,
+  );
 
   const commandPartsIn = tokeniseCommand(command);
 
@@ -184,11 +205,13 @@ const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
       }
 
       // Strip quatations if any
-      const pathOrigClean = path.normalize(
-        pathOrig.replace(/^["']?(.+?)["']?$/, '$1'),
-      );
+      const pathOrigClean = cleanPath(pathOrig);
 
-      compDbEntryPaths[pathType].push(pathOrigClean);
+      compDbEntryPaths[pathType].push(
+        path.isAbsolute(pathOrigClean)
+          ? pathOrigClean
+          : path.join(directory, pathOrigClean),
+      );
     } else {
       result.push(commandPartIn);
     }
@@ -227,9 +250,13 @@ const compDbEntryUnbox = ({ command, file }, config, rootPath, pathUnbox) => {
   const commandPartsOutLast =
     commandPartsOut.length > 0 ? commandPartsOut.length - 1 : 0;
 
+  const commandFileBoxed = cleanPath(commandPartsOut[commandPartsOutLast]);
+
   const commandFileUnboxed = pathUnbox(
     'file',
-    commandPartsOut[commandPartsOutLast],
+    path.isAbsolute(commandFileBoxed)
+      ? commandFileBoxed
+      : path.join(directory, commandFileBoxed),
     config,
     rootPath,
   );
