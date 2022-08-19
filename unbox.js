@@ -39,6 +39,21 @@ const pathUnbox = (pathType, pathBoxed, config, rootPath) => {
     }
   }
 
+  // for (const { predicate, replacement } of config.pathReplacements) {
+  //   if (pathBoxed.match(predicate)) {
+  //     const pathUnboxedToTest = pathBoxed.replace(predicate, replacement);
+  //     if (path.isAbsolute(pathUnboxedToTest)) {
+  //       if (fs.existsSync(pathUnboxedToTest)) {
+  //         pathUnboxed = pathUnboxedToTest;
+  //         break;
+  //       }
+  //     } else if (fs.existsSync(path.join(rootPath, pathUnboxedToTest))) {
+  //       pathUnboxed = pathUnboxedToTest;
+  //       break;
+  //     }
+  //   }
+  // }
+
   for (const { predicate, replacement } of config.pathReplacements) {
     if (pathBoxed.match(predicate)) {
       pathUnboxed = pathBoxed.replace(predicate, replacement);
