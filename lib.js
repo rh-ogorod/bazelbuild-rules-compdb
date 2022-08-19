@@ -85,7 +85,7 @@ const cleanPath = (pathRaw) => {
  *   pathReplacements: { predicate: RegExp, replacement: string }[],
  *   ignorePaths: RegExp[],
  *   additionalPaths: { type: string, value: string }[],
- *   additionalOptions: string[],
+ *   additionalOptions: { predicate: RegExp, options: string[] }[],
  * }} UnboxConfig
  */
 
@@ -264,8 +264,12 @@ const compDbEntryUnbox = (
 
   const commandPartsOutNoFile = commandPartsOut.slice(0, commandPartsOutLast);
 
-  config.additionalOptions.forEach((option) => {
-    commandPartsOutNoFile.push(option);
+  config.additionalOptions.forEach(({ predicate, options }) => {
+    if (commandFileUnboxed.match(predicate)) {
+      options.forEach((option) => {
+        commandPartsOutNoFile.push(option);
+      });
+    }
   });
 
   const commandUnboxed = commandPartsOutNoFile
