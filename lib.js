@@ -85,6 +85,7 @@ const cleanPath = (pathRaw) => {
  *   pathReplacements: { predicate: RegExp, replacement: string }[],
  *   ignorePaths: RegExp[],
  *   additionalPaths: { type: string, value: string }[],
+ *   additionalOptions: string[],
  * }} UnboxConfig
  */
 
@@ -263,6 +264,10 @@ const compDbEntryUnbox = (
 
   const commandPartsOutNoFile = commandPartsOut.slice(0, commandPartsOutLast);
 
+  config.additionalOptions.forEach((option) => {
+    commandPartsOutNoFile.push(option);
+  });
+
   const commandUnboxed = commandPartsOutNoFile
     .concat(commandPathsParts)
     .concat([commandFileUnboxed])
@@ -382,6 +387,7 @@ const loadConfig = (configPath) => {
     pathReplacements: userConfig?.pathReplacements ?? [],
     ignorePaths: userConfig?.ignorePaths ?? [],
     additionalPaths: userConfig?.additionalPaths ?? [],
+    additionalOptions: userConfig?.additionalOptions ?? [],
   };
 };
 
