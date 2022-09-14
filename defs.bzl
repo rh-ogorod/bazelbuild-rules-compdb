@@ -221,6 +221,7 @@ compilation_database_aspect = aspect(
   fragments = ["cpp"],
   required_aspect_providers = [CompilationAspect],
   implementation = _compilation_database_aspect_impl,
+  toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
   attrs = {
     "_cc_toolchain": attr.label(
       default = Label("@bazel_tools//tools/cpp:current_cc_toolchain")),
@@ -261,24 +262,13 @@ compilation_database = rule(
     ),
     "module_exts": attr.string_list(
       default = _module_exts_default,
-      doc = "List of extensions of compile module files which " +
+      doc = " ".join([
+        "List of extensions of compile module files which",
         "should be included into compillation database.",
+      ]),
     ),
-    # "exec_root": attr.string(
-    #   default = "__EXEC_ROOT__",
-    #   doc = "Execution root of Bazel as returned by 'bazel info execution_root'.",
-    # ),
-    # "include_dirs": attr.string_list(
-    #   default = _exclude_dirs_default,
-    #   doc = "List of direcrories to include to compillation database. " +
-    #     "Empty list means \"include all\"",
-    # ),
-    # "exclude_dirs": attr.string_list(
-    #   default = _exclude_dirs_default,
-    #   doc = "List of direcrories to exclude from compillation database." +
-    #     "Empty list means \"exclude nothing\"",
-    # ),
   },
+  # toolchains = ["//external/platforms:cc-toolchain-x64_linux-bazel"],
   outputs = {
     "filename": "compile_commands.json",
   },
