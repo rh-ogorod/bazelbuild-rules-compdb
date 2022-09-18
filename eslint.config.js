@@ -1,7 +1,8 @@
 // Hey Emacs, this is -*- coding: utf-8 -*-
 
-/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable import/no-extraneous-dependencies */
 
+/* eslint-disable-line */ // @ts-ignore
 const config = require('@rh-ogorod/js-configs/base/eslint.config');
 
 module.exports = {

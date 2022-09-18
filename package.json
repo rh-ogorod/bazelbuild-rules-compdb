@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "",
   "scripts": {
-    "lint": "eslint -c eslint.config.js --ext .js . ; echo '' ; tsc"
+    "lint": "eslint --ext .js . ; echo '' ; tsc"
   },
   "keywords": [],
   "author": "Victor Rybynok",
