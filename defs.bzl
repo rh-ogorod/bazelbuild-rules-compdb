@@ -269,6 +269,7 @@ compilation_database = rule(
     ),
   },
   # toolchains = ["//external/platforms:cc-toolchain-x64_linux-bazel"],
+  # see deprication https://bazel.build/rules/lib/globals#parameters_41
   outputs = {
     "filename": "compile_commands.json",
   },
