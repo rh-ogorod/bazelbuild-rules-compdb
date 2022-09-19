@@ -272,7 +272,7 @@ compilation_database = rule(
   # toolchains = ["//external/platforms:cc-toolchain-x64_linux-bazel"],
   # see deprication https://bazel.build/rules/lib/globals#parameters_41
   outputs = {
-    "filename": "compile_commands.json",
+    "filename": "bazel-compile_commands.json",
   },
   output_to_genfiles = True,
   implementation = _compilation_database_impl,
