@@ -246,11 +246,18 @@ const compDbEntryUnbox = (
     /** @type {string[]} */ ([]),
   );
 
-  // console.log('******', commandPartsOut);
+  // console.log('******', commandPartsOut[0]);
 
-  const commandPartsOutLast =
-    commandPartsOut.length > 0 ? commandPartsOut.length - 1 : 0;
+  if (commandPartsOut.length < 2) {
+    throw Error(
+      [
+        `Command parts "${JSON.stringify(commandPartsOut)}"`,
+        `count is less than 2: "${commandPartsOut.length}"`,
+      ].join(' '),
+    );
+  }
 
+  const commandPartsOutLast = commandPartsOut.length - 1;
   const commandFileBoxed = cleanPath(commandPartsOut[commandPartsOutLast]);
 
   const commandFileUnboxed = pathUnbox(
@@ -262,7 +269,22 @@ const compDbEntryUnbox = (
     rootPath,
   );
 
-  const commandPartsOutNoFile = commandPartsOut.slice(0, commandPartsOutLast);
+  const commandCompilerBoxed = cleanPath(commandPartsOut[0]);
+
+  let commandCompilerUnboxed = commandCompilerBoxed;
+
+  if (path.isAbsolute(commandCompilerBoxed)) {
+    commandCompilerUnboxed = pathUnbox(
+      'file',
+      commandCompilerBoxed,
+      config,
+      rootPath,
+    );
+  }
+
+  const commandPartsOutNoFile = commandPartsOut.slice(1, commandPartsOutLast);
+
+  // console.log('******', commandPartsOutNoFile);
 
   config.additionalOptions.forEach(({ predicate, options }) => {
     if (commandFileUnboxed.match(predicate)) {
@@ -272,7 +294,10 @@ const compDbEntryUnbox = (
     }
   });
 
-  const commandUnboxed = commandPartsOutNoFile
+  // console.log('******', [commandFileUnboxed]);
+
+  const commandUnboxed = [commandCompilerUnboxed]
+    .concat(commandPartsOutNoFile)
     .concat(commandPathsParts)
     .concat([commandFileUnboxed])
     .join(' ')
